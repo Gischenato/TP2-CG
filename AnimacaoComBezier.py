@@ -54,6 +54,7 @@ Max = Ponto()
 Personagens = [] 
 
 listaDeCurvas = []
+listaDePontos = []
 
 # ***********************************************************************************
 # Lista de curvas Bezier
@@ -62,14 +63,12 @@ Curvas = []
 angulo = 0.0
 
 def carregaPontos():
-    pontos = []
-    curvas = []
+    global listaDeCurvas, listaDePontos
     for line in open('Pontos.txt'):
         x, y = (int(val) for val in line.split())
-        pontos.append(Ponto(x,y))
+        listaDePontos.append(Ponto(x,y))
     for line in open('Curvas.txt'):
-        curvas.append([pontos[int(i)] for i in line.split()])
-    return curvas
+        listaDeCurvas.append([listaDePontos[int(i)] for i in line.split()])
 
 def DesenhaLinha (P1, P2):
     glBegin(GL_LINES)
@@ -93,8 +92,9 @@ def reshape(w,h):
     # Cria uma folga na Janela de Selecão, com 10% das dimensoes do poligono
     BordaX = abs(Max.x-Min.x)*0.1
     BordaY = abs(Max.y-Min.y)*0.1
+    asp = w/h
     #glOrtho(Min.x-BordaX, Max.x+BordaX, Min.y-BordaY, Max.y+BordaY, 0.0, 1.0)
-    glOrtho(Min.x, Max.x, Min.y, Max.y, 0.0, 1.0)
+    glOrtho(Min.x*asp, Max.x*asp, Min.y, Max.y, 0.0, 1.0)
     glMatrixMode (GL_MODELVIEW)
     glLoadIdentity()
 
@@ -144,6 +144,23 @@ def DesenhaCatavento():
     glPopMatrix()
     glPopMatrix()
 
+def desenhaSeta():
+    glLineWidth(3)
+    glPushMatrix()
+    glColor3f(0,0,0)
+    DesenhaSeta()
+    glPopMatrix()
+    # glLineWidth(3)
+    # glPushMatrix()
+    # DesenhaMastro()
+    # glPushMatrix()
+    # glColor3f(1,0,0)
+    # glTranslated(0,3,0)
+    # glScaled(0.2, 0.2, 1)
+    # DesenhaHelicesGirando()
+    # glPopMatrix()
+    # glPopMatrix()
+
 # **************************************************************
 def DesenhaEixos():
     global Min, Max
@@ -186,9 +203,7 @@ def display():
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
 
-    glLineWidth(3)
-    glColor3f(1,1,1) # R, G, B  [0..1]
-    DesenhaEixos()
+    glLineWidth(2)
 
     DesenhaPersonagens()
     DesenhaCurvas()
@@ -214,13 +229,18 @@ def keyboard(*args):
 #  arrow_keys ( a_keys: int, x: int, y: int )   
 # **********************************************************************
 def arrow_keys(a_keys: int, x: int, y: int):
+    global Personagens
+
     if a_keys == GLUT_KEY_UP:         # Se pressionar UP
-        pass
+        Personagens[0].posicao.y += 1
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
+        Personagens[0].posicao.y -= 1
         pass
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
+        Personagens[0].posicao.x -= 1
         pass
     if a_keys == GLUT_KEY_RIGHT:      # Se pressionar RIGHT
+        Personagens[0].posicao.x += 1
         pass
 
     glutPostRedisplay()
@@ -267,20 +287,21 @@ def CriaInstancias():
     global Personagens
 
     Personagens.append(InstanciaBZ())
-    Personagens[0].modelo = DesenhaCatavento
+    Personagens[0].modelo = DesenhaSeta
+    Personagens[0].escala = Ponto (.25,.25,.25) 
+    Personagens[0].cor = (0,0,0)
     Personagens[0].rotacao = 0
     Personagens[0].posicao = Ponto(0,0)
-    Personagens[0].escala = Ponto (1,1,1) 
 
-    Personagens.append(InstanciaBZ())
-    Personagens[1].posicao = Ponto(3,0)
-    Personagens[1].modelo = DesenhaCatavento
-    Personagens[1].rotacao = -90
+    # Personagens.append(InstanciaBZ())
+    # Personagens[1].posicao = Ponto(3,0)
+    # Personagens[1].modelo = DesenhaCatavento
+    # Personagens[1].rotacao = -90
   
-    Personagens.append(InstanciaBZ())
-    Personagens[2].posicao = Ponto(0,-5)
-    Personagens[2].modelo = DesenhaCatavento
-    Personagens[2].rotacao = 0
+    # Personagens.append(InstanciaBZ())
+    # Personagens[2].posicao = Ponto(0,-5)
+    # Personagens[2].modelo = DesenhaCatavento
+    # Personagens[2].rotacao = 0
 
 def CriaCurvas():
     global Curvas, listaDeCurvas
@@ -294,24 +315,24 @@ def init():
     global Min, Max
     # Define a cor do fundo da tela (AZUL)
     glClearColor(0, 0, 0, 1)
-    # CarregaModelos()
-    # CriaInstancias()
+    CarregaModelos()
+    CriaInstancias()
     CriaCurvas()
 
-    d:float = 7
-    Min = Ponto(-d,-d)
-    Max = Ponto(d,d)
+    zoom:float = 5
+    Min = Ponto(-zoom,-zoom)
+    Max = Ponto(zoom,zoom)
 
 def animate():
     global angulo
-    angulo = angulo + .1
+    # angulo = angulo + .1
     glutPostRedisplay()
 
 # ***********************************************************************************
 # Programa Principal
 # ***********************************************************************************
 
-listaDeCurvas = carregaPontos()
+carregaPontos()
 
 glutInit(sys.argv)
 glutInitDisplayMode(GLUT_RGBA)
