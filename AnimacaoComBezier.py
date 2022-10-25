@@ -26,6 +26,22 @@ from InstanciaBZ import *
 from Bezier import *
 # ***********************************************************************************
 
+cores = {
+    0: (188,143,143),
+    1: (28,28,28),
+    2: (70,130,180),
+    3: (0,255,127),
+    4: (218,165,32),
+    5: (123,104,238),
+    6: (75,0,130),
+    7: (255,0,255),
+    8: (210,105,30),
+    9: (220,20,60),
+    10: (255,0,0),
+    11: (255,255,0),
+    12: (0,0,0),
+}
+
 # Modelos de Objetos
 MeiaSeta = Polygon()
 Mastro = Polygon()
@@ -153,8 +169,13 @@ def DesenhaPersonagens():
 
 # ***********************************************************************************
 def DesenhaCurvas():
+    global cores
+    contador = 0
     for I in Curvas:
+        r, g, b = cores[contador%12]
+        glColor3ub(r,g,b)
         I.Traca()
+        contador+=1
 
 # ***********************************************************************************
 def display():
@@ -198,10 +219,9 @@ def arrow_keys(a_keys: int, x: int, y: int):
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
         pass
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
-        Personagens[1].posicao.x -= 0.5
-        
+        pass
     if a_keys == GLUT_KEY_RIGHT:      # Se pressionar RIGHT
-        Personagens[1].rotacao += 1
+        pass
 
     glutPostRedisplay()
 
@@ -238,7 +258,7 @@ def mouseMove(x: int, y: int):
 def CarregaModelos():
     global MeiaSeta, Mastro
     MeiaSeta.LePontosDeArquivo("MeiaSeta.txt")
-    Mastro.LePontosDeArquivo("Mastro.txt")
+    # Mastro.LePontosDeArquivo("Mastro.txt")
 
 # ***********************************************************************************
 # Esta função deve instanciar todos os personagens do cenário
@@ -264,10 +284,6 @@ def CriaInstancias():
 
 def CriaCurvas():
     global Curvas, listaDeCurvas
-    # C = Bezier(Ponto (-5,-5), Ponto (0,6), Ponto (5,-5))
-    # Curvas.append(C)
-    print('-------------')
-    print(listaDeCurvas)
     for pontos in listaDeCurvas:
         C = Bezier(pontos[0], pontos[1], pontos[2])
         Curvas.append(C)
@@ -277,10 +293,9 @@ def CriaCurvas():
 def init():
     global Min, Max
     # Define a cor do fundo da tela (AZUL)
-    glClearColor(0, 0, 1, 1)
-
-    CarregaModelos()
-    CriaInstancias()
+    glClearColor(0, 0, 0, 1)
+    # CarregaModelos()
+    # CriaInstancias()
     CriaCurvas()
 
     d:float = 7
