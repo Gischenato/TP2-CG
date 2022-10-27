@@ -42,6 +42,8 @@ cores = {
     12: (0,0,0),
 }
 
+t = 0
+
 # Modelos de Objetos
 MeiaSeta = Polygon()
 Mastro = Polygon()
@@ -150,16 +152,6 @@ def desenhaSeta():
     glColor3f(0,0,0)
     DesenhaSeta()
     glPopMatrix()
-    # glLineWidth(3)
-    # glPushMatrix()
-    # DesenhaMastro()
-    # glPushMatrix()
-    # glColor3f(1,0,0)
-    # glTranslated(0,3,0)
-    # glScaled(0.2, 0.2, 1)
-    # DesenhaHelicesGirando()
-    # glPopMatrix()
-    # glPopMatrix()
 
 # **************************************************************
 def DesenhaEixos():
@@ -232,9 +224,22 @@ def arrow_keys(a_keys: int, x: int, y: int):
     global Personagens
 
     if a_keys == GLUT_KEY_UP:         # Se pressionar UP
-        Personagens[0].posicao.y += 1
+        p:InstanciaBZ = Personagens[0]
+        p.rotacao = 0
+        p.t += 0.05
+        if p.t > 1 or p.t < 0:
+            p.nroCurva += 1
+            p.t = 0
+            p.curva = Curvas[p.nroCurva % len(Curvas)]
+
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
-        Personagens[0].posicao.y -= 1
+        p:InstanciaBZ = Personagens[0]
+        p.rotacao = 180
+        p.t -= 0.05
+        if p.t > 1 or p.t < 0:
+            p.nroCurva -= 1
+            p.t = 1
+            p.curva = Curvas[p.nroCurva % len(Curvas)]
         pass
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
         Personagens[0].posicao.x -= 1
@@ -284,14 +289,14 @@ def CarregaModelos():
 # Esta função deve instanciar todos os personagens do cenário
 # ***********************************************************************************
 def CriaInstancias():
-    global Personagens
-
+    global Personagens, Curvas
     Personagens.append(InstanciaBZ())
     Personagens[0].modelo = DesenhaSeta
     Personagens[0].escala = Ponto (.25,.25,.25) 
-    Personagens[0].cor = (0,0,0)
+    Personagens[0].cor = (255,255,255)
     Personagens[0].rotacao = 0
     Personagens[0].posicao = Ponto(0,0)
+    Personagens[0].setCurva(Curvas[0])
 
     # Personagens.append(InstanciaBZ())
     # Personagens[1].posicao = Ponto(3,0)
@@ -315,16 +320,21 @@ def init():
     global Min, Max
     # Define a cor do fundo da tela (AZUL)
     glClearColor(0, 0, 0, 1)
+    CriaCurvas()
     CarregaModelos()
     CriaInstancias()
-    CriaCurvas()
 
     zoom:float = 5
     Min = Ponto(-zoom,-zoom)
     Max = Ponto(zoom,zoom)
 
 def animate():
-    global angulo
+    global angulo, Personagens
+    # personagem:InstanciaBZ = Personagens[0]
+    # personagem.setPosicao(personagem.t)
+    # print(personagem.t)
+    # personagem.t += 0.001
+    # personagem.t %= 1
     # angulo = angulo + .1
     glutPostRedisplay()
 

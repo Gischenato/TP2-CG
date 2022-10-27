@@ -26,9 +26,8 @@ class Bezier:
         #P.imprime()
 
     def Calcula(self, t):
-        UmMenosT = 1-t
         P = Ponto()
-        P = self.Coords[0] * UmMenosT * UmMenosT + self.Coords[1] * 2 * UmMenosT * t + self.Coords[2] * t*t
+        P = self.Coords[0] * (1-t) * (1-t) + self.Coords[1] * 2 * (1-t) * t + self.Coords[2] * t*t
         return P
 
     def Traca(self):     
