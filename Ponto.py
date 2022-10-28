@@ -27,11 +27,18 @@ class Ponto:
         self.y = y
         self.z = z
     
+    def __str__(self):
+        return f"Ponto({self.x}, {self.y})"
 # Definicao de operadores
 # https://www.programiz.com/python-programming/operator-overloading
     def __add__(self, other):
             x = self.x + other.x
             y = self.y + other.y
+            return Ponto(x, y)
+
+    def __sub__(self, other):
+            x = self.x - other.x
+            y = self.y - other.y
             return Ponto(x, y)
 
     def __mul__(self, other: int):

@@ -22,6 +22,8 @@ class InstanciaBZ:
         self.cor = (0,0,0)
         self.nroCurva = 0
         self.curva = None
+
+        self.direcao = 1
     
     """ Imprime os valores de cada eixo do ponto """
     # Faz a impressao usando sobrecarga de funcao

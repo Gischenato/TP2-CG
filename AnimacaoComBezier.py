@@ -17,6 +17,7 @@
 #   https://stackoverflow.com/questions/6819661/python-location-on-mac-osx
 #   Veja o arquivo Patch.rtf, armazenado na mesma pasta deste fonte.
 # ***********************************************************************************
+import math
 
 from OpenGL.GL import *
 from OpenGL.GLUT import *
@@ -24,6 +25,8 @@ from OpenGL.GLU import *
 from Poligonos import *
 from InstanciaBZ import *
 from Bezier import *
+
+from random import randint
 # ***********************************************************************************
 
 cores = {
@@ -58,9 +61,10 @@ Personagens = []
 listaDeCurvas = []
 listaDePontos = []
 
+proximas_e_anteriores = {}
+
 # ***********************************************************************************
 # Lista de curvas Bezier
-Curvas = []
 
 angulo = 0.0
 
@@ -69,8 +73,37 @@ def carregaPontos():
     for line in open('Pontos.txt'):
         x, y = (int(val) for val in line.split())
         listaDePontos.append(Ponto(x,y))
+    pid = 0
     for line in open('Curvas.txt'):
-        listaDeCurvas.append([listaDePontos[int(i)] for i in line.split()])
+        p1, p2, p3 = [listaDePontos[int(i)] for i in line.split()]
+        bezier = Bezier(p1, p2, p3, pid=pid)
+        pid+=1
+        listaDeCurvas.append(bezier)
+        proximas_e_anteriores[bezier.id] = {
+            'curva': bezier,
+            'proximas': [],
+            'anteriores': []
+        }
+
+    for i in range(len(listaDeCurvas)):
+        for j in range(len(listaDeCurvas)):
+            atual:Bezier = listaDeCurvas[i]
+            outra:Bezier = listaDeCurvas[j]
+            if atual.p3 == outra.p1:
+                proximas_e_anteriores[atual.id]['proximas'].append((outra, 1))
+            elif atual.p3 == outra.p3 and atual != outra:
+                proximas_e_anteriores[atual.id]['proximas'].append((outra, -1))
+            
+            if atual.p1 == outra.p3:
+                proximas_e_anteriores[atual.id]['anteriores'].append((outra, 1))
+            elif atual.p1 == outra.p1 and atual != outra:
+                proximas_e_anteriores[atual.id]['anteriores'].append((outra, -1)) 
+    
+    for bezier in listaDeCurvas:
+        print(f'Bezier {str(bezier)}:')
+        proximas = proximas_e_anteriores[bezier.id]['proximas']
+        anteriores = proximas_e_anteriores[bezier.id]['anteriores']
+
 
 def DesenhaLinha (P1, P2):
     glBegin(GL_LINES)
@@ -180,7 +213,7 @@ def DesenhaPersonagens():
 def DesenhaCurvas():
     global cores
     contador = 0
-    for I in Curvas:
+    for I in listaDeCurvas:
         r, g, b = cores[contador%12]
         glColor3ub(r,g,b)
         I.Traca()
@@ -220,27 +253,46 @@ def keyboard(*args):
 # **********************************************************************
 #  arrow_keys ( a_keys: int, x: int, y: int )   
 # **********************************************************************
+def mover(p:InstanciaBZ, direcao):
+    inicial = p.posicao
+    p.rotacao = 0
+    p.t += p.direcao * 0.05 * direcao
+    if p.t >= 1 or p.t <= 0:
+        if p.t > 0.5:
+            print('PROXIMA')
+            proximas = proximas_e_anteriores[p.curva.id]['proximas']
+            prox, direcao = proximas[randint(0, len(proximas)-1)]
+            p.curva = prox
+            p.direcao = direcao
+            p.t = 0 if direcao > 0 else 1
+        else:
+            print("ANTERIOR")
+            anteriores = proximas_e_anteriores[p.curva.id]['anteriores']
+            for val in anteriores:
+                print(val[0])
+            prox, direcao = anteriores[randint(0, len(anteriores)-1)]
+            p.curva = prox
+            p.direcao = -direcao
+            p.t = 1 if direcao > 0 else 0
+    p.setPosicao(p.t)
+    final = p.posicao
+    variacao = final - inicial
+    delta = variacao.y / variacao.x
+
+    p.rotacao = math.atan2(variacao.y, variacao.x) * 180 / math.pi
+    # p.rotacao += 180 if p.direcao < 0 else 0
+    # print(delta)
+
+
+
 def arrow_keys(a_keys: int, x: int, y: int):
     global Personagens
 
     if a_keys == GLUT_KEY_UP:         # Se pressionar UP
-        p:InstanciaBZ = Personagens[0]
-        p.rotacao = 0
-        p.t += 0.05
-        if p.t > 1 or p.t < 0:
-            p.nroCurva += 1
-            p.t = 0
-            p.curva = Curvas[p.nroCurva % len(Curvas)]
+        mover(Personagens[0], 1)
 
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
-        p:InstanciaBZ = Personagens[0]
-        p.rotacao = 180
-        p.t -= 0.05
-        if p.t > 1 or p.t < 0:
-            p.nroCurva -= 1
-            p.t = 1
-            p.curva = Curvas[p.nroCurva % len(Curvas)]
-        pass
+        mover(Personagens[0], -1)
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
         Personagens[0].posicao.x -= 1
         pass
@@ -289,14 +341,14 @@ def CarregaModelos():
 # Esta função deve instanciar todos os personagens do cenário
 # ***********************************************************************************
 def CriaInstancias():
-    global Personagens, Curvas
+    global Personagens
     Personagens.append(InstanciaBZ())
     Personagens[0].modelo = DesenhaSeta
     Personagens[0].escala = Ponto (.25,.25,.25) 
     Personagens[0].cor = (255,255,255)
     Personagens[0].rotacao = 0
     Personagens[0].posicao = Ponto(0,0)
-    Personagens[0].setCurva(Curvas[0])
+    Personagens[0].setCurva(listaDeCurvas[0])
 
     # Personagens.append(InstanciaBZ())
     # Personagens[1].posicao = Ponto(3,0)
@@ -308,19 +360,13 @@ def CriaInstancias():
     # Personagens[2].modelo = DesenhaCatavento
     # Personagens[2].rotacao = 0
 
-def CriaCurvas():
-    global Curvas, listaDeCurvas
-    for pontos in listaDeCurvas:
-        C = Bezier(pontos[0], pontos[1], pontos[2])
-        Curvas.append(C)
-
-
 # ***********************************************************************************
 def init():
     global Min, Max
     # Define a cor do fundo da tela (AZUL)
     glClearColor(0, 0, 0, 1)
-    CriaCurvas()
+    # CriaCurvas()
+    carregaPontos()
     CarregaModelos()
     CriaInstancias()
 
@@ -342,7 +388,6 @@ def animate():
 # Programa Principal
 # ***********************************************************************************
 
-carregaPontos()
 
 glutInit(sys.argv)
 glutInitDisplayMode(GLUT_RGBA)

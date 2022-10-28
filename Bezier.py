@@ -15,15 +15,22 @@ class Bezier:
         #P = self.Coords[0]
         #P.imprime()
 
-    def __init__(self, *args:Ponto):
+    def __init__(self, *args:Ponto, pid=0):
         #print ("Construtora da Bezier")
         self.ComprimentoTotalDaCurva = 0.0
         self.Coords = []
+        self.id = pid
+        self.p1 = args[0]
+        self.p2 = args[1]
+        self.p3 = args[2]
         #print (args)
         for i in args:
             self.Coords.append(i)
         #P = self.Coords[2]
         #P.imprime()
+
+    def __str__(self):
+        return f'Bezier {self.id} ({self.p1}) ({self.p3})'
 
     def Calcula(self, t):
         P = Ponto()
