@@ -99,10 +99,10 @@ def carregaPontos():
             elif atual.p1 == outra.p1 and atual != outra:
                 proximas_e_anteriores[atual.id]['anteriores'].append((outra, -1)) 
     
-    for bezier in listaDeCurvas:
-        print(f'Bezier {str(bezier)}:')
-        proximas = proximas_e_anteriores[bezier.id]['proximas']
-        anteriores = proximas_e_anteriores[bezier.id]['anteriores']
+    # for bezier in listaDeCurvas:
+    #     print(f'Bezier {str(bezier)}:')
+    #     proximas = proximas_e_anteriores[bezier.id]['proximas']
+    #     anteriores = proximas_e_anteriores[bezier.id]['anteriores']
 
 
 def DesenhaLinha (P1, P2):
@@ -214,7 +214,8 @@ def DesenhaCurvas():
     global cores
     contador = 0
     for I in listaDeCurvas:
-        r, g, b = cores[contador%12]
+        # r, g, b = cores[contador%12]
+        r, g, b = (255,0,0)
         glColor3ub(r,g,b)
         I.Traca()
         contador+=1
@@ -230,8 +231,8 @@ def display():
 
     glLineWidth(2)
 
-    DesenhaPersonagens()
     DesenhaCurvas()
+    DesenhaPersonagens()
     
     glutSwapBuffers()
 
@@ -253,18 +254,20 @@ def keyboard(*args):
 # **********************************************************************
 #  arrow_keys ( a_keys: int, x: int, y: int )   
 # **********************************************************************
-def mover(p:InstanciaBZ, direcao):
+def mover(p:InstanciaBZ, speed=1):
     inicial = p.posicao
     p.rotacao = 0
-    p.t += p.direcao * 0.05 * direcao
+    p.t = p.t + p.direcao * (0.003 * speed)
     if p.t >= 1 or p.t <= 0:
         if p.t > 0.5:
             print('PROXIMA')
             proximas = proximas_e_anteriores[p.curva.id]['proximas']
             prox, direcao = proximas[randint(0, len(proximas)-1)]
             p.curva = prox
-            p.direcao = direcao
+            # p.direcao = direcao if movimento == 1 else -direcao
+            # p.t = 0 if direcao > 0 else 1 if movimento == 1 else 1 if direcao > 0 else 0
             p.t = 0 if direcao > 0 else 1
+            p.direcao = direcao
         else:
             print("ANTERIOR")
             anteriores = proximas_e_anteriores[p.curva.id]['anteriores']
@@ -274,10 +277,11 @@ def mover(p:InstanciaBZ, direcao):
             p.curva = prox
             p.direcao = -direcao
             p.t = 1 if direcao > 0 else 0
+
     p.setPosicao(p.t)
     final = p.posicao
     variacao = final - inicial
-    delta = variacao.y / variacao.x
+    # delta = variacao.y / variacao.x
 
     p.rotacao = math.atan2(variacao.y, variacao.x) * 180 / math.pi
     # p.rotacao += 180 if p.direcao < 0 else 0
@@ -287,12 +291,14 @@ def mover(p:InstanciaBZ, direcao):
 
 def arrow_keys(a_keys: int, x: int, y: int):
     global Personagens
+    personagem:InstanciaBZ = Personagens[0]
 
     if a_keys == GLUT_KEY_UP:         # Se pressionar UP
-        mover(Personagens[0], 1)
+        personagem.direcao = -personagem.direcao
 
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
-        mover(Personagens[0], -1)
+        personagem.direcao = -personagem.direcao
+        # mover(Personagens[0])
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
         Personagens[0].posicao.x -= 1
         pass
@@ -343,22 +349,44 @@ def CarregaModelos():
 def CriaInstancias():
     global Personagens
     Personagens.append(InstanciaBZ())
-    Personagens[0].modelo = DesenhaSeta
-    Personagens[0].escala = Ponto (.25,.25,.25) 
-    Personagens[0].cor = (255,255,255)
-    Personagens[0].rotacao = 0
-    Personagens[0].posicao = Ponto(0,0)
-    Personagens[0].setCurva(listaDeCurvas[0])
+    Personagens.append(InstanciaBZ())
+    Personagens.append(InstanciaBZ())
+    Personagens.append(InstanciaBZ())
+    
+    p0:InstanciaBZ = Personagens[0]
+    p1:InstanciaBZ = Personagens[1]
+    p2:InstanciaBZ = Personagens[2]
+    p3:InstanciaBZ = Personagens[3]
 
-    # Personagens.append(InstanciaBZ())
-    # Personagens[1].posicao = Ponto(3,0)
-    # Personagens[1].modelo = DesenhaCatavento
-    # Personagens[1].rotacao = -90
-  
-    # Personagens.append(InstanciaBZ())
-    # Personagens[2].posicao = Ponto(0,-5)
-    # Personagens[2].modelo = DesenhaCatavento
-    # Personagens[2].rotacao = 0
+    p0.modelo = DesenhaSeta
+    p0.escala = Ponto (.25,.25,.25) 
+    p0.cor = (255,255,255)
+    p0.rotacao = 0
+    p0.posicao = Ponto(0,0)
+    p0.setCurva(listaDeCurvas[0])
+    p0.colorirCurva = True
+    
+    p1.modelo = DesenhaSeta
+    p1.escala = Ponto (.25,.25,.25) 
+    p1.cor = (255,0,0)
+    p1.rotacao = 0
+    p1.posicao = Ponto(0,0)
+    p1.setCurva(listaDeCurvas[8])
+
+    p2.modelo = DesenhaSeta
+    p2.escala = Ponto (.25,.25,.25) 
+    p2.cor = (255,0,0)
+    p2.rotacao = 0
+    p2.posicao = Ponto(0,0)
+    p2.setCurva(listaDeCurvas[8])
+
+    p3.modelo = DesenhaSeta
+    p3.escala = Ponto (.25,.25,.25) 
+    p3.cor = (255,0,0)
+    p3.rotacao = 0
+    p3.posicao = Ponto(0,0)
+    p3.setCurva(listaDeCurvas[8])
+
 
 # ***********************************************************************************
 def init():
@@ -370,12 +398,16 @@ def init():
     CarregaModelos()
     CriaInstancias()
 
-    zoom:float = 5
+    zoom:float = 9
     Min = Ponto(-zoom,-zoom)
     Max = Ponto(zoom,zoom)
 
 def animate():
     global angulo, Personagens
+    mover(Personagens[0])
+    mover(Personagens[1], speed=.5)
+    mover(Personagens[2], speed=.25)
+    mover(Personagens[3], speed=1)
     # personagem:InstanciaBZ = Personagens[0]
     # personagem.setPosicao(personagem.t)
     # print(personagem.t)

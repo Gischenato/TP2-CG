@@ -37,7 +37,9 @@ class Bezier:
         P = self.Coords[0] * (1-t) * (1-t) + self.Coords[1] * 2 * (1-t) * t + self.Coords[2] * t*t
         return P
 
-    def Traca(self):     
+    def Traca(self, color=None):     
+        if color: glColor3ub(color[0], color[1], color[2])
+        
         t=0.0
         DeltaT = 1.0/50
         P = Ponto

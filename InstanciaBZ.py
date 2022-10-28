@@ -14,6 +14,8 @@ from Ponto import *
 """ Classe Instancia """
 class InstanciaBZ:   
     def __init__(self):
+        self.colorirCurva = False
+
         self.posicao = Ponto (0,0,0) 
         self.escala = Ponto (1,1,1)
         self.rotacao:float = 0.0
@@ -50,6 +52,8 @@ class InstanciaBZ:
         self.t = 0.0
 
     def Desenha(self):
+        if self.colorirCurva: 
+            self.curva.Traca(color=(0,0,255))
         #print ("Desenha")
         #self.escala.imprime("\tEscala: ")
         #print ("\tRotacao: ", self.rotacao)
