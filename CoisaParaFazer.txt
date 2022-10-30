@@ -1,0 +1,8 @@
+10 Inimigos
+20 Curvas
+Reiniciar ao apertar espaco
+Testar colisão
+
+Perguntas:
+1) O deslocamento pode ser automatico?
+2) O que seria: Para parar e reiniciar o movimento, deve ser usada a tecla ESPAÇO.

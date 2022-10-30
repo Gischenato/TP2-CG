@@ -26,7 +26,7 @@ from Poligonos import *
 from InstanciaBZ import *
 from Bezier import *
 
-from random import randint
+from random import Random, randint
 # ***********************************************************************************
 
 cores = {
@@ -45,11 +45,10 @@ cores = {
     12: (0,0,0),
 }
 
-t = 0
-
 # Modelos de Objetos
 MeiaSeta = Polygon()
 Mastro = Polygon()
+MeiaSetaInimiga = Polygon()
 
 # Limites da Janela de Seleção
 Min = Ponto()
@@ -57,7 +56,6 @@ Max = Ponto()
 
 # lista de instancias do Personagens
 Personagens = [] 
-
 listaDeCurvas = []
 listaDePontos = []
 
@@ -66,11 +64,10 @@ proximas_e_anteriores = {}
 # ***********************************************************************************
 # Lista de curvas Bezier
 
-angulo = 0.0
 
 def carregaPontos():
     global listaDeCurvas, listaDePontos
-    for line in open('Pontos.txt'):
+    for line in open('Pontos2.txt'):
         x, y = (int(val) for val in line.split())
         listaDePontos.append(Ponto(x,y))
     pid = 0
@@ -136,6 +133,15 @@ def reshape(w,h):
 # ***********************************************************************************
 def DesenhaMastro():
     Mastro.desenhaPoligono()
+
+# ***********************************************************************************
+
+def DesenhaSetaInimiga():
+    glPushMatrix()
+    MeiaSetaInimiga.desenhaPoligono()
+    glScaled(1,-1, 1)
+    MeiaSetaInimiga.desenhaPoligono()
+    glPopMatrix()
 
 # ***********************************************************************************
 def DesenhaSeta():
@@ -246,6 +252,8 @@ def keyboard(*args):
     # If escape is pressed, kill everything.
     if args[0] == b'q':
         os._exit(0)
+    if args[0] == b' ':
+        init()
     if args[0] == ESCAPE:
         os._exit(0)
 # Forca o redesenho da tela
@@ -254,40 +262,47 @@ def keyboard(*args):
 # **********************************************************************
 #  arrow_keys ( a_keys: int, x: int, y: int )   
 # **********************************************************************
-def mover(p:InstanciaBZ, speed=1):
+def proxima_curva(p:InstanciaBZ):
+    global proximas_e_anteriores
+    if p.t > 0.5:
+        proximas = proximas_e_anteriores[p.curva.id]['proximas']
+        proxima = proximas[randint(0, len(proximas)-1)]
+        p.proximas = proximas
+        p.proxCurva = proxima
+    else:
+        anteriores = proximas_e_anteriores[p.curva.id]['anteriores']
+        anterior = anteriores[randint(0, len(anteriores)-1)]
+        p.proximas = anteriores
+        p.proxCurva = anterior
+    p.jaEscolheu = True
+
+def mover(p:InstanciaBZ):
     inicial = p.posicao
     p.rotacao = 0
-    p.t = p.t + p.direcao * (0.003 * speed)
+    p.t = p.t + p.direcao * (0.003 * p.speed)
+
+    if p.direcao == 1 and p.t >= .5 or p.direcao == -1 and p.t <= .5:
+        if not p.jaEscolheu:
+            proxima_curva(p)
+    else:
+        p.proxCurva = None
+        p.jaEscolheu = False
+
+
     if p.t >= 1 or p.t <= 0:
+        prox, direcao = p.proxCurva
+        p.curva = prox
         if p.t > 0.5:
-            print('PROXIMA')
-            proximas = proximas_e_anteriores[p.curva.id]['proximas']
-            prox, direcao = proximas[randint(0, len(proximas)-1)]
-            p.curva = prox
-            # p.direcao = direcao if movimento == 1 else -direcao
-            # p.t = 0 if direcao > 0 else 1 if movimento == 1 else 1 if direcao > 0 else 0
             p.t = 0 if direcao > 0 else 1
             p.direcao = direcao
         else:
-            print("ANTERIOR")
-            anteriores = proximas_e_anteriores[p.curva.id]['anteriores']
-            for val in anteriores:
-                print(val[0])
-            prox, direcao = anteriores[randint(0, len(anteriores)-1)]
-            p.curva = prox
-            p.direcao = -direcao
             p.t = 1 if direcao > 0 else 0
+            p.direcao = -direcao
 
     p.setPosicao(p.t)
     final = p.posicao
     variacao = final - inicial
-    # delta = variacao.y / variacao.x
-
     p.rotacao = math.atan2(variacao.y, variacao.x) * 180 / math.pi
-    # p.rotacao += 180 if p.direcao < 0 else 0
-    # print(delta)
-
-
 
 def arrow_keys(a_keys: int, x: int, y: int):
     global Personagens
@@ -298,13 +313,12 @@ def arrow_keys(a_keys: int, x: int, y: int):
 
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
         personagem.direcao = -personagem.direcao
-        # mover(Personagens[0])
+    
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
-        Personagens[0].posicao.x -= 1
-        pass
+        personagem.troca_a_proxima_curva(1)
+    
     if a_keys == GLUT_KEY_RIGHT:      # Se pressionar RIGHT
-        Personagens[0].posicao.x += 1
-        pass
+        personagem.troca_a_proxima_curva(-1)
 
     glutPostRedisplay()
 
@@ -339,59 +353,66 @@ def mouseMove(x: int, y: int):
     return
 
 def CarregaModelos():
-    global MeiaSeta, Mastro
+    global MeiaSeta, Mastro, MeiaSetaInimiga
     MeiaSeta.LePontosDeArquivo("MeiaSeta.txt")
+    MeiaSetaInimiga.LePontosDeArquivo("MeiaSetaInimiga.txt")
     # Mastro.LePontosDeArquivo("Mastro.txt")
 
 # ***********************************************************************************
 # Esta função deve instanciar todos os personagens do cenário
 # ***********************************************************************************
-def CriaInstancias():
+def adicionaPersonagem(speed, cor=(255,0,0)):
     global Personagens
     Personagens.append(InstanciaBZ())
-    Personagens.append(InstanciaBZ())
-    Personagens.append(InstanciaBZ())
-    Personagens.append(InstanciaBZ())
-    
-    p0:InstanciaBZ = Personagens[0]
-    p1:InstanciaBZ = Personagens[1]
-    p2:InstanciaBZ = Personagens[2]
-    p3:InstanciaBZ = Personagens[3]
+    nP:InstanciaBZ = Personagens[-1]
+    nP.speed = speed
+    nP.cor = cor
+    nP.modelo = DesenhaSetaInimiga
+    nP.escala = Ponto (.25,.25,.25) 
+    nP.setCurva(listaDeCurvas[8])
+    nP.curva = listaDeCurvas[randint(0, len(listaDeCurvas)-1)]
+    nP.t = .5
+    nP.direcao = 1 if randint(0,1) == 0 else -1
 
+
+def CriaInstancias():
+    global Personagens
+
+    Personagens.append(InstanciaBZ())
+    p0:InstanciaBZ = Personagens[0]
     p0.modelo = DesenhaSeta
     p0.escala = Ponto (.25,.25,.25) 
     p0.cor = (255,255,255)
     p0.rotacao = 0
     p0.posicao = Ponto(0,0)
     p0.setCurva(listaDeCurvas[0])
-    p0.colorirCurva = True
+    p0.principal = True
+    p0.speed = .4
     
-    p1.modelo = DesenhaSeta
-    p1.escala = Ponto (.25,.25,.25) 
-    p1.cor = (255,0,0)
-    p1.rotacao = 0
-    p1.posicao = Ponto(0,0)
-    p1.setCurva(listaDeCurvas[8])
-
-    p2.modelo = DesenhaSeta
-    p2.escala = Ponto (.25,.25,.25) 
-    p2.cor = (255,0,0)
-    p2.rotacao = 0
-    p2.posicao = Ponto(0,0)
-    p2.setCurva(listaDeCurvas[8])
-
-    p3.modelo = DesenhaSeta
-    p3.escala = Ponto (.25,.25,.25) 
-    p3.cor = (255,0,0)
-    p3.rotacao = 0
-    p3.posicao = Ponto(0,0)
-    p3.setCurva(listaDeCurvas[8])
-
+    adicionaPersonagem(speed=.1, cor=cores[0])
+    adicionaPersonagem(speed=1, cor=cores[1])
+    adicionaPersonagem(speed=.5, cor=cores[2])
+    adicionaPersonagem(speed=.25, cor=cores[3])
+    adicionaPersonagem(speed=.75, cor=cores[4])
+    adicionaPersonagem(speed=.2, cor=cores[5])
+    adicionaPersonagem(speed=.3, cor=cores[6])
+    # adicionaPersonagem(speed=.4)
+    # adicionaPersonagem(speed=.5)
+    # adicionaPersonagem(speed=.6)
+    # adicionaPersonagem(speed=.7)
+    # adicionaPersonagem(speed=.8)
+    # adicionaPersonagem(speed=.9)
+    # adicionaPersonagem(speed=1.1)
 
 # ***********************************************************************************
 def init():
-    global Min, Max
+    global Min, Max, Personagens, listaDeCurvas, listaDePontos, proximas_e_anteriores
     # Define a cor do fundo da tela (AZUL)
+    Personagens = []
+    listaDeCurvas = []
+    listaDePontos = []
+    
+
     glClearColor(0, 0, 0, 1)
     # CriaCurvas()
     carregaPontos()
@@ -404,16 +425,8 @@ def init():
 
 def animate():
     global angulo, Personagens
-    mover(Personagens[0])
-    mover(Personagens[1], speed=.5)
-    mover(Personagens[2], speed=.25)
-    mover(Personagens[3], speed=1)
-    # personagem:InstanciaBZ = Personagens[0]
-    # personagem.setPosicao(personagem.t)
-    # print(personagem.t)
-    # personagem.t += 0.001
-    # personagem.t %= 1
-    # angulo = angulo + .1
+    for i in range(len(Personagens)):
+        mover(Personagens[i])
     glutPostRedisplay()
 
 # ***********************************************************************************

@@ -14,7 +14,7 @@ from Ponto import *
 """ Classe Instancia """
 class InstanciaBZ:   
     def __init__(self):
-        self.colorirCurva = False
+        self.principal = False
 
         self.posicao = Ponto (0,0,0) 
         self.escala = Ponto (1,1,1)
@@ -22,14 +22,27 @@ class InstanciaBZ:
         self.modelo = None
         self.t = 0.0
         self.cor = (0,0,0)
-        self.nroCurva = 0
         self.curva = None
+        self.proxCurva = None
+        self.proximas = None
+        self.speed = 1
+
+        self.jaEscolheu = False
 
         self.direcao = 1
+
+        self.posCurva = 0
     
     """ Imprime os valores de cada eixo do ponto """
     # Faz a impressao usando sobrecarga de funcao
     # https://www.educative.io/edpresso/what-is-method-overloading-in-python
+    def troca_a_proxima_curva(self, lado):
+        if self.proxCurva is not None:
+            self.posCurva += lado
+            prox = self.proximas[self.posCurva % len(self.proximas)]
+            if prox == self.proxCurva: self.troca_a_proxima_curva(lado)
+            else: self.proxCurva = prox
+
     def setCurva(self, curva:Bezier):
         self.curva = curva
 
@@ -52,8 +65,11 @@ class InstanciaBZ:
         self.t = 0.0
 
     def Desenha(self):
-        if self.colorirCurva: 
+        if self.principal:
             self.curva.Traca(color=(0,0,255))
+            if self.proxCurva is not None:
+                self.proxCurva[0].Traca(color=(0,255,0), lineWidth=4)
+        
         #print ("Desenha")
         #self.escala.imprime("\tEscala: ")
         #print ("\tRotacao: ", self.rotacao)
