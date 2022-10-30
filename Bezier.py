@@ -26,6 +26,8 @@ class Bezier:
         #print (args)
         for i in args:
             self.Coords.append(i)
+
+        self.tamanho = self.tamCurva()
         #P = self.Coords[2]
         #P.imprime()
 
@@ -36,6 +38,21 @@ class Bezier:
         P = Ponto()
         P = self.Coords[0] * (1-t) * (1-t) + self.Coords[1] * 2 * (1-t) * t + self.Coords[2] * t*t
         return P
+
+    def tamCurva(self):
+        total = 0
+        deltaT = 1/50
+        t = deltaT
+        p1 = self.Calcula(0)
+        while t < 1:
+            p2 = self.Calcula(t)
+            vet = p2 - p1
+            total += vet.modulo()
+            t+=deltaT
+        p2 = self.Calcula(1)
+        vet = p2-p1
+        total += vet.modulo()
+        return total
 
     def Traca(self, color=None, lineWidth=None):     
         if color: glColor3ub(color[0], color[1], color[2])

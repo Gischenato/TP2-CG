@@ -21,6 +21,9 @@ class Ponto:
         else:
             print (self.x, self.y, self.z)
 
+    def modulo(self):
+        return (self.x**2 + self.y**2)**0.5
+        
     """ Define os valores dos eixos do ponto """
     def set(self, x, y, z=0):
         self.x = x

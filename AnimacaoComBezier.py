@@ -67,11 +67,11 @@ proximas_e_anteriores = {}
 
 def carregaPontos():
     global listaDeCurvas, listaDePontos
-    for line in open('Pontos2.txt'):
+    for line in open('SuperPontos.txt'):
         x, y = (int(val) for val in line.split())
         listaDePontos.append(Ponto(x,y))
     pid = 0
-    for line in open('Curvas.txt'):
+    for line in open('SuperCurvas.txt'):
         p1, p2, p3 = [listaDePontos[int(i)] for i in line.split()]
         bezier = Bezier(p1, p2, p3, pid=pid)
         pid+=1
@@ -279,6 +279,8 @@ def proxima_curva(p:InstanciaBZ):
 def mover(p:InstanciaBZ):
     inicial = p.posicao
     p.rotacao = 0
+    deltaT = p.speed/p.curva.tamanho
+    p.t = p.t + p.direcao * deltaT
     p.t = p.t + p.direcao * (0.003 * p.speed)
 
     if p.direcao == 1 and p.t >= .5 or p.direcao == -1 and p.t <= .5:
@@ -387,7 +389,7 @@ def CriaInstancias():
     p0.posicao = Ponto(0,0)
     p0.setCurva(listaDeCurvas[0])
     p0.principal = True
-    p0.speed = .4
+    p0.speed = 1
     
     adicionaPersonagem(speed=.1, cor=cores[0])
     adicionaPersonagem(speed=1, cor=cores[1])
