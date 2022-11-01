@@ -31,7 +31,8 @@ class Polygon:
     
     def desenhaPoligono(self):
         #print ("Desenha Poligono - Tamanho:", len(self.Vertices))
-        glBegin(GL_LINE_LOOP)
+        # glBegin(GL_LINE_LOOP)
+        glBegin(GL_POLYGON)
         for V in self.Vertices:
             glVertex3f(V.x,V.y,V.z)
         glEnd();

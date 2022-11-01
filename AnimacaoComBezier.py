@@ -26,12 +26,12 @@ from Poligonos import *
 from InstanciaBZ import *
 from Bezier import *
 
-from random import Random, randint
+from random import randint
 # ***********************************************************************************
 
 cores = {
     0: (188,143,143),
-    1: (28,28,28),
+    1: (89,120,33),
     2: (70,130,180),
     3: (0,255,127),
     4: (218,165,32),
@@ -44,6 +44,9 @@ cores = {
     11: (255,255,0),
     12: (0,0,0),
 }
+
+colidiu = False
+SPEED = 1
 
 # Modelos de Objetos
 MeiaSeta = Polygon()
@@ -226,6 +229,7 @@ def DesenhaCurvas():
         I.Traca()
         contador+=1
 
+
 # ***********************************************************************************
 def display():
 
@@ -234,7 +238,6 @@ def display():
 
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
-
     glLineWidth(2)
 
     DesenhaCurvas()
@@ -248,12 +251,15 @@ def display():
 #ESCAPE = '\033'
 ESCAPE = b'\x1b'
 def keyboard(*args):
+    global Personagens, SPEED
     print (args)
     # If escape is pressed, kill everything.
     if args[0] == b'q':
         os._exit(0)
-    if args[0] == b' ':
+    if args[0] == b'r':
         init()
+    if args[0] == b' ':
+        Personagens[0].speed = 0 if Personagens[0].speed == SPEED else SPEED
     if args[0] == ESCAPE:
         os._exit(0)
 # Forca o redesenho da tela
@@ -277,11 +283,11 @@ def proxima_curva(p:InstanciaBZ):
     p.jaEscolheu = True
 
 def mover(p:InstanciaBZ):
+    if p.speed == 0: return
     inicial = p.posicao
     p.rotacao = 0
-    deltaT = p.speed/p.curva.tamanho
+    deltaT = p.speed/p.curva.tamanho*.8
     p.t = p.t + p.direcao * deltaT
-    p.t = p.t + p.direcao * (0.003 * p.speed)
 
     if p.direcao == 1 and p.t >= .5 or p.direcao == -1 and p.t <= .5:
         if not p.jaEscolheu:
@@ -310,10 +316,12 @@ def arrow_keys(a_keys: int, x: int, y: int):
     global Personagens
     personagem:InstanciaBZ = Personagens[0]
 
-    if a_keys == GLUT_KEY_UP:         # Se pressionar UP
+    if a_keys == GLUT_KEY_UP:
+        personagem.speed = SPEED         # Se pressionar UP
         personagem.direcao = -personagem.direcao
 
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
+        personagem.speed = SPEED         # Se pressionar UP
         personagem.direcao = -personagem.direcao
     
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
@@ -378,7 +386,7 @@ def adicionaPersonagem(speed, cor=(255,0,0)):
 
 
 def CriaInstancias():
-    global Personagens
+    global Personagens, SPEED
 
     Personagens.append(InstanciaBZ())
     p0:InstanciaBZ = Personagens[0]
@@ -389,7 +397,7 @@ def CriaInstancias():
     p0.posicao = Ponto(0,0)
     p0.setCurva(listaDeCurvas[0])
     p0.principal = True
-    p0.speed = 1
+    p0.speed = SPEED
     
     adicionaPersonagem(speed=.1, cor=cores[0])
     adicionaPersonagem(speed=1, cor=cores[1])
@@ -408,12 +416,12 @@ def CriaInstancias():
 
 # ***********************************************************************************
 def init():
-    global Min, Max, Personagens, listaDeCurvas, listaDePontos, proximas_e_anteriores
+    global Min, Max, Personagens, listaDeCurvas, listaDePontos, proximas_e_anteriores, colidiu
     # Define a cor do fundo da tela (AZUL)
     Personagens = []
     listaDeCurvas = []
     listaDePontos = []
-    
+    colidiu = False
 
     glClearColor(0, 0, 0, 1)
     # CriaCurvas()
@@ -426,11 +434,24 @@ def init():
     Max = Ponto(zoom,zoom)
 
 def animate():
-    global angulo, Personagens
+    global angulo, Personagens, colidiu
+    if colidiu: return
+    colidiu = checaColisao(Personagens[0])
     for i in range(len(Personagens)):
         mover(Personagens[i])
     glutPostRedisplay()
 
+def checaColisao(personagen:InstanciaBZ):
+    global Personagens
+    for i in range(len(Personagens)):
+        if personagen == Personagens[i]:
+            continue
+        if personagen.colideCom(Personagens[i]):
+            personagen.speed = 0
+            Personagens[i].speed = 0
+            print("Colisão")
+            return True
+    return False
 # ***********************************************************************************
 # Programa Principal
 # ***********************************************************************************
@@ -440,7 +461,7 @@ glutInit(sys.argv)
 glutInitDisplayMode(GLUT_RGBA)
 # Define o tamanho inicial da janela grafica do programa
 glutInitWindowSize(750, 750)
-glutInitWindowPosition(100, 100)
+glutInitWindowPosition(200, 100)
 wind = glutCreateWindow("Exemplo de Criacao de Instancias")
 glutDisplayFunc(display)
 glutIdleFunc(animate)

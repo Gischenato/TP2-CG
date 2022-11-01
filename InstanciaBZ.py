@@ -64,6 +64,13 @@ class InstanciaBZ:
         self.nroCurva = nroCurva
         self.t = 0.0
 
+    def colideCom(self, outro):
+        if self.curva == outro.curva:
+            deltaT = self.t - outro.t
+            if abs(deltaT) < 0.05:
+                return True
+        return False            
+
     def Desenha(self):
         if self.principal:
             self.curva.Traca(color=(0,0,255))
