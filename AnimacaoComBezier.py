@@ -232,13 +232,15 @@ def DesenhaCurvas():
 
 # ***********************************************************************************
 def display():
-
+    global colidiu
 	# Limpa a tela coma cor de fundo
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
     glLineWidth(2)
+    colidiu = checaColisao(Personagens[0])
+
 
     DesenhaCurvas()
     DesenhaPersonagens()
@@ -292,6 +294,7 @@ def mover(p:InstanciaBZ):
     if p.direcao == 1 and p.t >= .5 or p.direcao == -1 and p.t <= .5:
         if not p.jaEscolheu:
             proxima_curva(p)
+            if p.principal: print('Proxima curva: ', p.proxCurva[0].id)
     else:
         p.proxCurva = None
         p.jaEscolheu = False
@@ -317,18 +320,24 @@ def arrow_keys(a_keys: int, x: int, y: int):
     personagem:InstanciaBZ = Personagens[0]
 
     if a_keys == GLUT_KEY_UP:
+        print('Mudando de direcao')
         personagem.speed = SPEED         # Se pressionar UP
         personagem.direcao = -personagem.direcao
 
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
+        print('Mudando de direcao')
         personagem.speed = SPEED         # Se pressionar UP
         personagem.direcao = -personagem.direcao
     
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
-        personagem.troca_a_proxima_curva(1)
+        if personagem.jaEscolheu:
+            personagem.troca_a_proxima_curva(1)
+            print('Proxima curva trocada: ', personagem.proxCurva[0].id)
     
     if a_keys == GLUT_KEY_RIGHT:      # Se pressionar RIGHT
-        personagem.troca_a_proxima_curva(-1)
+        if personagem.jaEscolheu:
+            personagem.troca_a_proxima_curva(-1)
+            print('Proxima curva trocada: ', personagem.proxCurva[0].id)
 
     glutPostRedisplay()
 
@@ -405,10 +414,10 @@ def CriaInstancias():
     adicionaPersonagem(speed=.25, cor=cores[3])
     adicionaPersonagem(speed=.75, cor=cores[4])
     adicionaPersonagem(speed=.2, cor=cores[5])
-    adicionaPersonagem(speed=.3, cor=cores[6])
-    # adicionaPersonagem(speed=.4)
-    # adicionaPersonagem(speed=.5)
-    # adicionaPersonagem(speed=.6)
+    adicionaPersonagem(speed=.3, cor=cores[7])
+    adicionaPersonagem(speed=.4, cor=cores[8])
+    adicionaPersonagem(speed=.5, cor=cores[9])
+    adicionaPersonagem(speed=.6, cor=cores[10])
     # adicionaPersonagem(speed=.7)
     # adicionaPersonagem(speed=.8)
     # adicionaPersonagem(speed=.9)
@@ -429,14 +438,14 @@ def init():
     CarregaModelos()
     CriaInstancias()
 
-    zoom:float = 9
+    zoom:float = 10
     Min = Ponto(-zoom,-zoom)
     Max = Ponto(zoom,zoom)
 
 def animate():
     global angulo, Personagens, colidiu
     if colidiu: return
-    colidiu = checaColisao(Personagens[0])
+    # colidiu = checaColisao(Personagens[0])
     for i in range(len(Personagens)):
         mover(Personagens[i])
     glutPostRedisplay()
@@ -449,7 +458,8 @@ def checaColisao(personagen:InstanciaBZ):
         if personagen.colideCom(Personagens[i]):
             personagen.speed = 0
             Personagens[i].speed = 0
-            print("Colisão")
+            print("Colisão, fim de jogo")
+            print("'r' para reiniciar")
             return True
     return False
 # ***********************************************************************************
@@ -461,7 +471,7 @@ glutInit(sys.argv)
 glutInitDisplayMode(GLUT_RGBA)
 # Define o tamanho inicial da janela grafica do programa
 glutInitWindowSize(750, 750)
-glutInitWindowPosition(200, 100)
+glutInitWindowPosition(600, 100)
 wind = glutCreateWindow("Exemplo de Criacao de Instancias")
 glutDisplayFunc(display)
 glutIdleFunc(animate)

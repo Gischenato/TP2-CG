@@ -1,5 +1,0 @@
-Testar colisão
-
-Perguntas:
-1) O deslocamento pode ser automatico?
-2) A colisão precisa estar na mesma linha?
